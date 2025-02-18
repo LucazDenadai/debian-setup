@@ -60,10 +60,35 @@ sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
 sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
 sudo apt update && sudo apt install -y code
 
+# Criar atalho para Visual Studio Code
+mkdir -p ~/.local/share/applications/
+cat <<EOL > ~/.local/share/applications/code.desktop
+[Desktop Entry]
+Name=Visual Studio Code
+Comment=Editor de código-fonte
+Exec=/usr/bin/code
+Icon=code
+Terminal=false
+Type=Application
+Categories=Development;IDE;
+EOL
+
 # Instalar JetBrains Toolbox
 wget -O "$DOWNLOADS_DIR/jetbrains-toolbox.tar.gz" https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.21.9547.tar.gz
 sudo tar -xzf "$DOWNLOADS_DIR/jetbrains-toolbox.tar.gz" -C /opt
 /opt/jetbrains-toolbox-*/jetbrains-toolbox &
+
+# Criar atalho para JetBrains Toolbox
+cat <<EOL > ~/.local/share/applications/jetbrains-toolbox.desktop
+[Desktop Entry]
+Name=JetBrains Toolbox
+Comment=Gerenciador de IDEs da JetBrains
+Exec=/opt/jetbrains-toolbox-*/jetbrains-toolbox
+Icon=jetbrains-toolbox
+Terminal=false
+Type=Application
+Categories=Development;IDE;
+EOL
 
 # Remover jogos do GNOME
 sudo apt remove -y gnome-games
@@ -88,6 +113,18 @@ echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] http
 sudo apt update && sudo apt install -y brave-browser
 sudo update-alternatives --set x-www-browser /usr/bin/brave-browser
 
+# Criar atalho para Brave Browser
+cat <<EOL > ~/.local/share/applications/brave-browser.desktop
+[Desktop Entry]
+Name=Brave Browser
+Comment=Navegador web rápido, privado e seguro
+Exec=/usr/bin/brave-browser
+Icon=brave-browser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+EOL
+
 # Instalar Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
@@ -96,6 +133,6 @@ sudo apt upgrade -y && sudo apt autoremove -y
 
 # Gerar menu de aplicativos instalados
 echo "Programas instalados e disponíveis no menu:"
-ls -1 /usr/share/applications | grep "\.desktop" | sed 's/\.desktop//g'
-
-echo "Instalação concluída!"
+ls -
+::contentReference[oaicite:0]{index=0}
+ 
