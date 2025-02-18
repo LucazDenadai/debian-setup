@@ -3,13 +3,38 @@
 # Atualizar a lista de pacotes
 sudo apt update
 
+# Adicionar repositórios ao sources.list
+sudo tee /etc/apt/sources.list > /dev/null <<EOL
+deb http://deb.debian.org/debian bookworm main non-free-firmware
+deb-src http://deb.debian.org/debian bookworm main non-free-firmware
+
+deb http://deb.debian.org/debian-security/ bookworm-security main non-free-firmware
+deb-src http://deb.debian.org/debian-security/ bookworm-security main non-free-firmware
+
+deb http://deb.debian.org/debian bookworm-updates main non-free-firmware
+deb-src http://deb.debian.org/debian bookworm-updates main non-free-firmware
+
+deb http://deb.debian.org/debian bookworm contrib non-free
+deb-src http://deb.debian.org/debian bookworm contrib non-free
+EOL
+
+sudo apt update && sudo apt upgrade -y
+
+# Criar um diretório para armazenar os downloads
+DOWNLOADS_DIR="$HOME/Downloads/instalados"
+mkdir -p "$DOWNLOADS_DIR"
+
 # Instalar o Timeshift e fazer um backup inicial
 sudo apt install timeshift -y
 sudo timeshift --create --comments "Backup inicial após instalação"
 
 # Instalar drivers da NVIDIA e utilitários de desempenho
-sudo apt install -y nvidia-driver nvidia-settings nvidia-prime mesa-utils
-sudo apt install -y libvulkan1 libvulkan1:i386 vulkan-tools vulkan-utils
+sudo dpkg --add-architecture i386
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y firmware-misc-nonfree intel-microcode linux-headers-amd64 \
+  nvidia-driver nvidia-settings libvulkan-dev nvidia-vulkan-icd vulkan-tools vulkan-validationlayers \
+  fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
+  libsdl2-mixer-2.0-0 libsdl2-net-2.0-0
 
 # Instalar pacotes essenciais para programação
 sudo apt install -y python3 python3-pip default-jdk nodejs npm git
@@ -26,22 +51,19 @@ sudo systemctl start docker
 sudo apt install -y apt-transport-https ca-certificates curl
 sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo apt update
-sudo apt install -y kubectl
+sudo apt update && sudo apt install -y kubectl
 
 # Instalar Visual Studio Code
-sudo apt install -y wget gpg
-wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+wget -qO "$DOWNLOADS_DIR/packages.microsoft.gpg" https://packages.microsoft.com/keys/microsoft.asc
+gpg --dearmor < "$DOWNLOADS_DIR/packages.microsoft.gpg" > packages.microsoft.gpg
 sudo install -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/
 sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
-sudo apt update
-sudo apt install -y code
+sudo apt update && sudo apt install -y code
 
 # Instalar JetBrains Toolbox
-wget -O jetbrains-toolbox.tar.gz https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.21.9547.tar.gz
-sudo tar -xzf jetbrains-toolbox.tar.gz -C /opt
-rm jetbrains-toolbox.tar.gz
-/opt/jetbrains-toolbox-*/jetbrains-toolbox
+wget -O "$DOWNLOADS_DIR/jetbrains-toolbox.tar.gz" https://download.jetbrains.com/toolbox/jetbrains-toolbox-1.21.9547.tar.gz
+sudo tar -xzf "$DOWNLOADS_DIR/jetbrains-toolbox.tar.gz" -C /opt
+/opt/jetbrains-toolbox-*/jetbrains-toolbox &
 
 # Remover jogos do GNOME
 sudo apt remove -y gnome-games
@@ -54,26 +76,26 @@ sudo apt install -y flatpak
 sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 # Instalar Steam, Discord, Bitwarden, Spotify via Flatpak
-sudo flatpak install -y flathub com.valvesoftware.Steam
-sudo flatpak install -y flathub com.discordapp.Discord
-sudo flatpak install -y flathub com.bitwarden.desktop
-sudo flatpak install -y flathub com.spotify.Client
+for app in com.valvesoftware.Steam com.discordapp.Discord com.bitwarden.desktop com.spotify.Client; do
+  sudo flatpak install -y flathub $app
+  echo "Aplicativo instalado: $app"
+done
 
 # Instalar Brave Browser
-sudo apt install -y curl
-sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+wget -qO "$DOWNLOADS_DIR/brave-browser-archive-keyring.gpg" https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+sudo install -o root -g root -m 644 "$DOWNLOADS_DIR/brave-browser-archive-keyring.gpg" /usr/share/keyrings/
 echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
-sudo apt update
-sudo apt install -y brave-browser
-
-# Definir Brave como navegador padrão
+sudo apt update && sudo apt install -y brave-browser
 sudo update-alternatives --set x-www-browser /usr/bin/brave-browser
 
 # Instalar Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
 # Atualizar o sistema
-sudo apt upgrade -y
-sudo apt autoremove -y
+sudo apt upgrade -y && sudo apt autoremove -y
+
+# Gerar menu de aplicativos instalados
+echo "Programas instalados e disponíveis no menu:"
+ls -1 /usr/share/applications | grep "\.desktop" | sed 's/\.desktop//g'
 
 echo "Instalação concluída!"
